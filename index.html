@@ -1,12 +1,176 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-  </head>
-  <body>
-    <h1>Hello EC2!</h1>
-  </body>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>클릭 이동 JS Carousel with Header</title>
+<style>
+  body {
+    margin: 0;
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+  }
+
+  /* 헤더 스타일 */
+  header {
+    width: 100%;
+    height: 60px;
+    background-color: #fff;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* 섀도우 결계선 */
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 20;
+  }
+
+  header button {
+    margin: 30px;
+    margin-left: 10px;
+    padding: 8px 16px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #1976d2;
+    color: #fff;
+    transition: background 0.3s ease;
+  }
+
+  header button:hover {
+    background-color: #1565c0;
+  }
+
+  /* 캐러셀 컨테이너 */
+  .carousel-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 80px; /* 헤더 높이 + 여백 */
+  }
+
+  .carousel-container {
+    width: 40%;
+    height: 600px;
+    overflow: hidden;
+    position: relative;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  }
+
+  .carousel {
+    display: flex;
+    transition: transform 0.5s ease;
+    height: 100%;
+  }
+
+  .carousel img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    flex-shrink: 0;
+    cursor: pointer; /* 클릭 가능 표시 */
+  }
+
+  .arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.7);
+    border: none;
+    font-size: 1.8rem;
+    padding: 0 10px;
+    cursor: pointer;
+    z-index: 10;
+    border-radius: 5px;
+  }
+
+  .arrow.left { left: 10px; }
+  .arrow.right { right: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="login">로그인</button>
+  <button id="signup">회원가입</button>
+</header>
+
+<div class="carousel-wrapper">
+  <div class="carousel-container">
+    <div class="carousel" id="carousel">
+      <img src="" alt="slide1">
+      <img src="api.png" alt="slide2">
+      <img src="https://cdn.vuetifyjs.com/images/cards/sunshine.jpg" alt="slide3">
+    </div>
+    <button class="arrow left" id="prev">&#10094;</button>
+    <button class="arrow right" id="next">&#10095;</button>
+  </div>
+</div>
+
+<script>
+const carousel = document.getElementById('carousel');
+const slides = Array.from(carousel.children);
+let index = 0;
+
+// 클릭 시 이동 URL
+const targetUrl = 'http://127.0.0.1:5500/public/Taimtableapi.html';
+
+// 각 이미지 클릭 이벤트 추가
+slides.forEach(slide => {
+  slide.addEventListener('click', () => {
+    window.location.href = targetUrl;
+  });
+});
+
+// 자동 슬라이드 (2초마다)
+let interval = setInterval(nextSlide, 2000);
+
+// 다음 슬라이드
+function nextSlide() {
+  index++;
+  if (index >= slides.length) index = 0; // 무한 반복
+  updateCarousel();
+}
+
+// 이전 슬라이드
+function prevSlide() {
+  index--;
+  if (index < 0) index = slides.length - 1; // 무한 반복
+  updateCarousel();
+}
+
+// 슬라이드 위치 업데이트
+function updateCarousel() {
+  carousel.style.transform = `translateX(${-index * 100}%)`;
+}
+
+// 버튼 이벤트
+document.getElementById('next').addEventListener('click', () => {
+  nextSlide();
+  resetInterval();
+});
+document.getElementById('prev').addEventListener('click', () => {
+  prevSlide();
+  resetInterval();
+});
+
+// 자동 슬라이드 재시작
+function resetInterval() {
+  clearInterval(interval);
+  interval = setInterval(nextSlide, 2000);
+}
+
+// 로그인/회원가입 버튼 클릭 예시
+document.getElementById('login').addEventListener('click', () => {
+  alert('로그인 버튼 클릭됨');
+});
+document.getElementById('signup').addEventListener('click', () => {
+  alert('회원가입 버튼 클릭됨');
+});
+</script>
+
+</body>
 </html>

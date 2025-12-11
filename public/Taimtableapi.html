@@ -1,11 +1,180 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>시간표 디자인</title>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #f9fafc;
+      margin: 20px;
+      padding: 0;
+      color: #333;
+    }
+    div {
+      text-align: center;
+    }
+    select, input[type="number"], button {
+      font-size: 16px;
+      padding: 6px 10px;
+      margin: 10px 6px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      outline: none;
+      transition: 0.3s;
+    }
+    select:hover, input[type="number"]:hover, button:hover {
+      border-color: #4a90e2;
+      cursor: pointer;
+    }
+    button {
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+    }
+    button:hover {
+      background-color: #357ABD;
+    }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 350px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      background-color: #fff;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    table tr:first-child td {
+      background-color: #4a90e2;
+      color: white;
+      font-weight: 600;
+      font-size: 18px;
+    }
+    table td {
+      padding: 14px 12px;
+      border-bottom: 1px solid #e1e5eb;
+      font-size: 16px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    table tr:nth-child(even):not(:first-child):not(:nth-child(6)) {
+      background-color: #f5f8fc;
+    }
+    table tr:nth-child(6) td {
+      background-color: #ffe3b8;
+      font-weight: bold;
+      font-size: 16px;
+      color: #a66900;
+    }
+  </style>
 </head>
 <body>
-    
+  <div>
+    학년
+    <input type="number" id="grade" min="1" max="3" />
+    반
+    <input type="number" id="class" min="1" max="9" />
+    요일
+    <select id="day-select">
+      <option value="월요일">월요일</option>
+      <option value="화요일">화요일</option>
+      <option value="수요일">수요일</option>
+      <option value="목요일">목요일</option>
+      <option value="금요일">금요일</option>
+    </select>
+    <br />
+    <button onclick="fetchTimetable()">갱신</button>
+
+    <table>
+      <tr>
+        <td>교시</td>
+        <td>과목</td>
+      </tr>
+      <tr><td>1교시</td><td id="period-1">-</td></tr>
+      <tr><td>2교시</td><td id="period-2">-</td></tr>
+      <tr><td>3교시</td><td id="period-3">-</td></tr>
+      <tr><td>4교시</td><td id="period-4">-</td></tr>
+      <tr><td colspan="2">점심 시간</td></tr>
+      <tr><td>5교시</td><td id="period-5">-</td></tr>
+      <tr><td>6교시</td><td id="period-6">-</td></tr>
+      <tr><td>7교시</td><td id="period-7">-</td></tr>
+    </table>
+  </div>
+
+  <!-- ✅ config.js 먼저 불러오기 -->
+  <script src="config.js"></script>
+  <script>
+    function getDateOfWeekDay(weekday) {
+      const dayMap = {
+        "월요일": 1, "화요일": 2, "수요일": 3, "목요일": 4, "금요일": 5
+      };
+      const targetDay = dayMap[weekday];
+      const now = new Date();
+      const today = now.getDay() === 0 ? 7 : now.getDay();
+      const diff = targetDay - today;
+      const targetDate = new Date(now);
+      targetDate.setDate(now.getDate() + diff);
+      return targetDate;
+    }
+
+    function fetchTimetable() {
+      const grade = document.getElementById('grade').value;
+      const classNum = document.getElementById('class').value;
+      const day = document.getElementById('day-select').value;
+
+      if (!grade || grade < 1 || grade > 3) {
+        alert("학년을 입력하세요.");
+        return;
+      }
+      if (!classNum || classNum < 1 || classNum > 9) {
+        alert("반을 입력하세요.");
+        return;
+      }
+
+      const dateObj = getDateOfWeekDay(day);
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}${mm}${dd}`;
+
+      // ✅ API KEY를 config.js에서 불러오기
+      const url = `https://open.neis.go.kr/hub/hisTimetable?KEY=&Type=xml&pIndex=1&pSize=100&ATPT_OFCDC_SC_CODE=B10&SD_SCHUL_CODE=7010537&AY=${yyyy}&GRADE=${grade}&CLASS_NM=${classNum}&TI_FROM_YMD=${dateStr}&TI_TO_YMD=${dateStr}`;
+
+      fetch(url)
+        .then(res => res.text())
+        .then(str => {
+          const parser = new DOMParser();
+          const xml = parser.parseFromString(str, "application/xml");
+
+          const rows = xml.getElementsByTagName("row");
+          clearTable();
+
+          if (!rows || rows.length === 0) {
+            alert("시간표 데이터가 없습니다.");
+            return;
+          }
+
+          for (let i = 0; i < rows.length; i++) {
+            const perio = rows[i].getElementsByTagName("PERIO")[0]?.textContent || "";
+            const subject = rows[i].getElementsByTagName("ITRT_CNTNT")[0]?.textContent || "-";
+            const periodCell = document.getElementById(`period-${parseInt(perio)}`);
+            if (periodCell) periodCell.textContent = subject;
+          }
+        })
+        .catch(err => {
+          console.error("오류 발생:", err);
+          alert("시간표를 불러오는 중 문제가 발생했습니다.");
+          clearTable();
+        });
+    }
+
+    function clearTable() {
+      for (let i = 1; i <= 7; i++) {
+        const cell = document.getElementById(`period-${i}`);
+        if (cell) cell.textContent = "-";
+      }
+    }
+  </script>
 </body>
 </html>
